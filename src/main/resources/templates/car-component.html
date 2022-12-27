@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en">
+<head>
+    <title>Car components</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/external/css/customSearch.css" th:href="@{/external/css/customSearch.css}">
+    <link rel="stylesheet" href="../static/external/css/floatingButton.css" th:href="@{/external/css/floatingButton.css}">
+    <link rel="stylesheet" href="../static/external/css/bootstrap.css" th:href="@{/external/css/bootstrap.css}">
+    <link rel="stylesheet" href="../static/external/css/custom-navbar.css" th:href="@{/external/css/custom-navbar.css}">
+
+    <script type="text/javascript" src="/static/angular.min.js" th:src="@{/angular.min.js}"></script>
+    <script type="text/javascript" src="/static/app/app.module.js" th:src="@{/app/app.module.js}"></script>
+    <script type="text/javascript" src="/app/car-component.controller.js" th:src="@{/app/car-component.controller.js}"></script>
+
+    <script type="text/javascript" src="../static/external/js/jquery.min.js" th:src="@{/external/js/jquery.min.js}"></script>
+    <script type="text/javascript" src="../static/external/js/bootstrap.min.js" th:src="@{/external/js/bootstrap.min.js}"></script>
+    <script src="https://kit.fontawesome.com/f9f9791997.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="../static/external/js/bootstrap.bundle.js" th:src="@{/external/js/bootstrap.bundle.js}"></script>
+
+</head>
+<body ng-app="app" ng-controller="CarComponentController as vm">
+<nav class="navbar navbar-icon-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Dream car platform</a>
+    <form class="form-inline my-2 my-lg-0" style="right:40px; position:fixed;">
+        <button class="btn btn-info form-control mr-sm-2" disabled="disabled" th:text="${email}">
+        </button>
+        <button sec:authorize="hasRole('ROLE_SUPPLIER')" class="btn btn-outline-success form-control mr-sm-2" disabled>
+            SUPPLIER
+        </button>
+        <button sec:authorize="hasRole('ROLE_BUYER')" class="btn btn-outline-primary form-control mr-sm-2" disabled>
+            BUYER
+        </button>
+        <a class="btn btn-outline-danger my-2 my-sm-0" href="/logout">Logout</a>
+    </form>
+</nav>
+
+<!--SEARCH FOR CAR COMPONENT-->
+<div class="container">
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <div id="custom-search-input">
+                <div class="input-group col-md-12">
+                    <input type="text" class="form-control input-lg" placeholder="Car component name" ng-model="carComponentName" ng-change="vm.searchCarComponent()"/>
+                    <span class="input-group-btn">
+                            <button class="btn btn-info btn-lg" type="button">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Car components</th>
+                    <th>Status</th>
+                    <th>Added date</th>
+                    <th>Timeout (days)</th>
+                    <th>Price/product (RON)</th>
+                    <th>Quantity</th>
+                    <th sec:authorize="hasRole('ROLE_BUYER')">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="component in vm.components">
+                    <td>{{component.name}}</td>
+                    <td>
+                        <span ng-show="component.status === 'ON_GOING'" class="badge badge-pill badge-primary">On going</span>
+                        <span ng-show="component.status !== 'ON_GOING'" class="badge badge-pill badge-success">Done</span>
+                    </td>
+                    <td>{{vm.formatDate(component.addedDate)}}</td>
+                    <td>{{component.timeout}}</td>
+                    <td>{{component.price}}</td>
+                    <td>{{component.quantity}}</td>
+                    <td>
+                        <button sec:authorize="hasRole('ROLE_BUYER')" class="btn btn-dark" type="button" ng-click="vm.deleteCarComponent(component.name)" data-toggle="tooltip" title="Delete car component">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                        <button class="btn btn-success" type="button" ng-click="vm.openViewComponentDetails(component)" data-toggle="tooltip" title="View component details">
+                            <i class="fa fa-folder-open-o"></i>
+                        </button>
+                        <button sec:authorize="hasRole('ROLE_SUPPLIER')" class="btn btn-primary" type="button" ng-click="vm.openPlaceOfferModal(component)" data-toggle="tooltip" title="Add new component offer">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+
+
+<a ng-click="vm.openAddCarComponentModal()" class="float" style="background-color: #79BE43" sec:authorize="hasRole('ROLE_BUYER')">
+    <i class="fa fa-plus my-float"></i>
+</a>
+
+<!--PLACE OFFER-->
+<div id="placeOfferModal" class="modal fade" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Place offer for {{vm.selectedComponent.name}}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="buyerPriceId">Buyer price / item (RON):</label>
+                    <input type="number" class="form-control" id="buyerPriceId" ng-model="vm.selectedComponent.price" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="offeredPriceId">Offered price / item (RON):</label>
+                    <input type="number" class="form-control" id="offeredPriceId" ng-model="carComponentOfferedPriceModel" autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" ng-click="vm.placeOffer()">Place offer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--VIEW DESCRIPTION & OFFERS-->
+<div id="viewCarComponentDataModal" class="modal fade" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">View component {{vm.selectedComponent.name}}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form role="form">
+                    <h5>Description</h5>
+                    <hr>
+                </form>
+                <form role="form">
+                    <div class="form-group">
+                        <label style="white-space: pre-wrap;">{{vm.selectedComponent.description}}</label>
+                    </div>
+                </form>
+                <form role="form">
+                    <h5>Offers</h5>
+                    <hr>
+                </form>
+                <form role="form">
+                    <div class="form-group">
+                        <div class="row" ng-show="vm.offers.length > 0">
+                            <div class="col-md-12">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Supplier</th>
+                                        <th>Offered price</th>
+                                        <th>Date added</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="offer in vm.offers">
+                                        <td ng-style="offer.applicationStatus && {'background':'lightblue'}">{{offer.username}}</td>
+                                        <td ng-style="offer.applicationStatus && {'background':'lightblue'}">{{offer.price}}</td>
+                                        <td ng-style="offer.applicationStatus && {'background':'lightblue'}">{{vm.formatDate(offer.dateAdded)}}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row" ng-show="vm.offers.length === 0">
+                            <div class="col-lg-12">
+                                <p style="text-align: center; vertical-align: center; font-style: italic">There are no offers for this component</p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+<!--                <button type="button" class="btn btn-primary" ng-click="vm.addCarComponent()">Add</button>-->
+            </div>
+        </div>
+    </div>
+</div>
+<!--ADD A CAR COMPONENT-->
+<div id="addCarComponentDataModal" class="modal fade" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add car component</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form role="form" id="addCarComponentForm">
+                    <div class="form-group">
+                        <label for="nameId">Name:</label>
+                        <input type="text" class="form-control" id="nameId" ng-model="carComponentNameModel" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="timeoutId">Timeout (days):</label>
+                        <input type="number" class="form-control" id="timeoutId" ng-model="carComponentTimeoutModel" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="quantityId">Quantity:</label>
+                        <input type="number" class="form-control" id="quantityId" ng-model="carComponentQuantityModel" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="priceId">Price / item (RON):</label>
+                        <input type="number" class="form-control" id="priceId" ng-model="carComponentPriceModel" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="descriptionId">Description:</label>
+                        <textarea class="form-control" id="descriptionId" ng-model="carComponentDescriptionModel" autocomplete="off"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" ng-click="vm.addCarComponent()">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
